@@ -177,6 +177,7 @@ void createSysFsBpfSubDir(const char* const prefix) {
 int main(int argc, char** argv) {
     (void)argc;
     android::base::InitLogging(argv, &android::base::KernelLogger);
+    bool ebpf_supported = android::base::GetBoolProperty("ro.kernel.ebpf.supported", true);
 
     // Create all the pin subdirectories
     // (this must be done first to allow selinux_context and pin_subdir functionality,
@@ -186,6 +187,7 @@ int main(int argc, char** argv) {
         createSysFsBpfSubDir(location.prefix);
     }
 
+    if (ebpf_supported) {
     // Load all ELF objects, create programs and maps, and pin them
     for (const auto& location : locations) {
         if (loadAllElfObjects(location) != 0) {
@@ -206,6 +208,7 @@ int main(int argc, char** argv) {
     if (android::bpf::writeToMapEntry(map, &key, &value, BPF_ANY)) {
         ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array.");
         return 1;
+        }
     }
 
     if (android::base::SetProperty("bpf.progs_loaded", "1") == false) {
